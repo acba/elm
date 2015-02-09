@@ -43,11 +43,9 @@ setup(
     author="Augusto Almeida",
     author_email='acba@cin.ufpe.br',
     url='https://github.com/acba/elm',
-    packages=[
-        'elm',
-    ],
-    package_dir={'elm':
-                 'elm'},
+    packages=['elm'],
+    package_dir={'elm':  'elm'},
+    package_data={'elm': ['*.cfg']},
     include_package_data=True,
     install_requires=requirements,
     dependency_links=['https://github.com/claesenm/optunity/archive/'
@@ -57,13 +55,17 @@ setup(
     keywords='elm, machine learning, artificial intelligence, ai, regression, \
               regressor, classifier, neural network, extreme learning machine',
     classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
+        'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
         'Natural Language :: English',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.4',
-        'Topic :: Software Development'
+        'Topic :: Software Development',
+        'Topic :: Software Development :: Libraries :: Python Modules',
+        'Topic :: Scientific/Engineering',
+        'Topic :: Scientific/Engineering :: Artificial Intelligence',
+        'Topic :: Scientific/Engineering :: Mathematics'
     ],
     cmdclass={'test': PyTest},
     test_suite='elm.tests',

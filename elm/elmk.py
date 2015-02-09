@@ -319,7 +319,7 @@ class ELMKernel(MLTools):
         print("##### Start search #####")
 
         config = configparser.ConfigParser()
-        config.read("elm/elmk.conf")
+        config.read("elm/elmk.cfg")
 
         best_function_error = 99999.9
         temp_error = best_function_error

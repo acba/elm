@@ -326,7 +326,7 @@ class ELMRandom(MLTools):
         print("##### Start search #####")
 
         config = configparser.ConfigParser()
-        config.read("elm/elmr.conf")
+        config.read("elm/elmr.cfg")
 
         best_function_error = 99999.9
         best_param_function = ""
