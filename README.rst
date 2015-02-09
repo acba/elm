@@ -1,6 +1,6 @@
-===============================
+=====================================
 Python Extreme Learning Machine (ELM)
-===============================
+=====================================
 
 .. image:: https://badge.fury.io/py/elm.png
     :target: http://badge.fury.io/py/elm
