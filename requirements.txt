@@ -2,3 +2,4 @@ numpy==1.9.1
 deap==1.0.1
 optunity==1.0.1
 sphinx_rtd_theme==0.1.6
+sphinxcontrib-napoleon==0.2.9
