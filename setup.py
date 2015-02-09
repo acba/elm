@@ -45,7 +45,6 @@ setup(
     url='https://github.com/acba/elm',
     packages=['elm'],
     package_dir={'elm':  'elm'},
-    package_data={'elm': ['*.cfg']},
     include_package_data=True,
     install_requires=requirements,
     dependency_links=['https://github.com/claesenm/optunity/archive/'

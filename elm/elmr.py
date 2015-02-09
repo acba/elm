@@ -329,8 +329,10 @@ class ELMRandom(MLTools):
         config.read("elm/elmr.cfg")
 
         best_function_error = 99999.9
+        temp_error = best_function_error
         best_param_function = ""
         best_param_c = 0
+        best_param_l = 0
         for function in search_functions:
 
             function_config = config["DEFAULT"]
@@ -381,14 +383,21 @@ class ELMRandom(MLTools):
                                   num_evals=30,
                                   param_c=param_ranges[0])
 
-            if details[0] < best_function_error:
-                best_function_error = details[0]
+            # Save best function result
+            if details[0] < temp_error:
+                temp_error = details[0]
 
                 if min_f == "accuracy":
-                    best_function_error = 1 / best_function_error
+                    best_function_error = 1 / temp_error
+                else:
+                    best_function_error = temp_error
 
                 best_param_function = function
                 best_param_c = optimal_pars["param_c"]
+                best_param_l = neurons
+
+            print("Function: ", function,
+                  " best cv value: ", details[0])
 
         # MLTools Attribute
         self.cv_best_rmse = best_function_error
@@ -396,6 +405,7 @@ class ELMRandom(MLTools):
         # elmr Attribute
         self.param_function = best_param_function
         self.param_c = best_param_c
+        self.param_l = best_param_l
 
         print("##### Search complete #####")
         self.print_parameters()

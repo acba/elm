@@ -492,11 +492,11 @@ class ELMKernel(MLTools):
                 else:
                     raise Exception("Invalid kernel function.")
 
-                print("best: ", best_param_kernel_function,
-                      best_function_error, best_param_c, best_param_kernel_param)
+                # print("best: ", best_param_kernel_function,
+                #       best_function_error, best_param_c, best_param_kernel_param)
 
-            print("Kernel function: ", kernel_function, " best cv value: ",
-                  details[0])
+            print("Kernel function: ", kernel_function,
+                  " best cv value: ", details[0])
 
         # MLTools attribute
         self.cv_best_rmse = best_function_error
