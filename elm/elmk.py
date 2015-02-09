@@ -495,8 +495,13 @@ class ELMKernel(MLTools):
                 # print("best: ", best_param_kernel_function,
                 #       best_function_error, best_param_c, best_param_kernel_param)
 
-            print("Kernel function: ", kernel_function,
-                  " best cv value: ", details[0])
+            if min_f == "accuracy":
+                print("Kernel function: ", kernel_function,
+                      " best cv value: ", 1/details[0])
+            else:
+                print("Kernel function: ", kernel_function,
+                      " best cv value: ", details[0])
+
 
         # MLTools attribute
         self.cv_best_rmse = best_function_error

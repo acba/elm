@@ -104,7 +104,7 @@ class ELMRandom(MLTools):
         """
         super().__init__()
 
-        self.available_functions = ["sigmoid"]
+        self.available_functions = ["sigmoid", "multiquadric"]
 
         self.regressor_name = "elmr"
 
@@ -396,8 +396,12 @@ class ELMRandom(MLTools):
                 best_param_c = optimal_pars["param_c"]
                 best_param_l = neurons
 
-            print("Function: ", function,
-                  " best cv value: ", details[0])
+            if min_f == "accuracy":
+                print("Function: ", function,
+                      " best cv value: ", 1/details[0])
+            else:
+                print("Function: ", function,
+                      " best cv value: ", details[0])
 
         # MLTools Attribute
         self.cv_best_rmse = best_function_error
