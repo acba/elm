@@ -4,16 +4,28 @@
     This file contains ELMKernel classes and all developed methods.
 """
 
+# Python2 support
+from __future__ import unicode_literals
+from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
+
+from .mltools import *
+
 import numpy as np
 import optunity
 import ast
 
-from .mltools import *
-
-try:
-    import configparser
-except ImportError:
+import sys
+if sys.version_info < (3, 0):
     import ConfigParser as configparser
+else:
+    import configparser
+
+
+# Find configuration file
+from pkg_resources import Requirement, resource_filename
+_ELMK_CONFIG = resource_filename(Requirement.parse("elm"), "elm/elmk.cfg")
 
 
 class ELMKernel(MLTools):
@@ -91,7 +103,7 @@ class ELMKernel(MLTools):
                 >>> elmk = elm.ELMKernel(params)
 
         """
-        super().__init__()
+        super(self.__class__, self).__init__()
 
         self.regressor_name = "elmk"
 
@@ -268,7 +280,7 @@ class ELMKernel(MLTools):
         print()
 
     def search_param(self, database, dataprocess=None, path_filename=("", ""),
-                     save=False, cv="ts", min_f="rmse", kf=None):
+                     save=False, cv="ts", of="rmse", kf=None, eval=50):
         """
             Search best hyperparameters for classifier/regressor based on
             optunity algorithms.
@@ -282,11 +294,12 @@ class ELMKernel(MLTools):
                 path_filename (tuple): *TODO*.
                 save (bool): *TODO*.
                 cv (str): Cross-validation method. Defaults to "ts".
-                min_f (str): Objective function to be minimized at
+                of (str): Objective function to be minimized at
                     optunity.minimize. Defaults to "rmse".
                 kf (list of str): a list of kernel functions to be used by
                     the search. Defaults to None, this set all available
                     functions.
+                eval (int): Number of steps (evaluations) to optunity algorithm.
 
 
             Each set of hyperparameters will perform a cross-validation
@@ -300,7 +313,7 @@ class ELMKernel(MLTools):
                 - "kfold" :func:`mltools.kfold_cross_validation()`
                     Perform a k-fold cross-validation.
 
-            Available *min_f* function:
+            Available *of* function:
                 - "accuracy", "rmse", "mape", "me".
 
 
@@ -319,7 +332,11 @@ class ELMKernel(MLTools):
         print("##### Start search #####")
 
         config = configparser.ConfigParser()
-        config.read("elm/elmk.cfg")
+
+        if sys.version_info < (3, 0):
+            config.readfp(open(_ELMK_CONFIG))
+        else:
+            config.read_file(open(_ELMK_CONFIG))
 
         best_function_error = 99999.9
         temp_error = best_function_error
@@ -328,15 +345,28 @@ class ELMKernel(MLTools):
         best_param_kernel_param = []
         for kernel_function in search_kernel_functions:
 
-            kernel_config = config[kernel_function]
-            n_parameters = int(kernel_config["kernel_n_param"])
+            if sys.version_info < (3, 0):
+                elmk_c_range = ast.literal_eval(config.get("DEFAULT",
+                                                           "elmk_c_range"))
 
-            _kc = ast.literal_eval(kernel_config["elmk_c_range"])
+                n_parameters = config.getint(kernel_function, "kernel_n_param")
+                kernel_p_range = \
+                    ast.literal_eval(config.get(kernel_function,
+                                                "kernel_params_range"))
 
-            param_ranges = [[_kc[0][0], _kc[0][1]]]
-            _kc = ast.literal_eval(kernel_config["kernel_params_range"])
+            else:
+                kernel_config = config[kernel_function]
+
+                elmk_c_range = ast.literal_eval(kernel_config["elmk_c_range"])
+
+                n_parameters = int(kernel_config["kernel_n_param"])
+                kernel_p_range = \
+                    ast.literal_eval(kernel_config["kernel_params_range"])
+
+            param_ranges = [[elmk_c_range[0][0], elmk_c_range[0][1]]]
             for param in range(n_parameters):
-                param_ranges.append([_kc[param][0], _kc[param][1]])
+                    param_ranges.append([kernel_p_range[param][0],
+                                         kernel_p_range[param][1]])
 
             def wrapper_0param(param_c):
                 """
@@ -364,10 +394,10 @@ class ELMKernel(MLTools):
                 else:
                     raise Exception("Invalid type of cross-validation.")
 
-                if min_f == "accuracy":
+                if of == "accuracy":
                     util = 1 / cv_te_error.get_accuracy()
                 else:
-                    util = cv_te_error.get(min_f)
+                    util = cv_te_error.get(of)
 
                 # print("c:", param_c, "util: ", util)
                 return util
@@ -398,10 +428,10 @@ class ELMKernel(MLTools):
                 else:
                     raise Exception("Invalid type of cross-validation.")
 
-                if min_f == "accuracy":
+                if of == "accuracy":
                     util = 1 / cv_te_error.get_accuracy()
                 else:
-                    util = cv_te_error.get(min_f)
+                    util = cv_te_error.get(of)
 
                 # print("c:", param_c, " gamma:", param_kernel, "util: ", util)
                 return util
@@ -434,10 +464,10 @@ class ELMKernel(MLTools):
                 else:
                     raise Exception("Invalid type of cross-validation.")
 
-                if min_f == "accuracy":
+                if of == "accuracy":
                     util = 1 / cv_te_error.get_accuracy()
                 else:
-                    util = cv_te_error.get(min_f)
+                    util = cv_te_error.get(of)
 
                 # print("c:", param_c, " param1:", param_kernel1,
                 #       " param2:", param_kernel2, "util: ", util)
@@ -447,14 +477,14 @@ class ELMKernel(MLTools):
                 optimal_parameters, details, _ = \
                     optunity.minimize(wrapper_0param,
                                       solver_name="cma-es",
-                                      num_evals=25,
+                                      num_evals=eval,
                                       param_c=param_ranges[0])
 
             elif kernel_function == "rbf":
                 optimal_parameters, details, _ = \
                     optunity.minimize(wrapper_1param,
                                       solver_name="cma-es",
-                                      num_evals=50,
+                                      num_evals=eval,
                                       param_c=param_ranges[0],
                                       param_kernel=param_ranges[1])
 
@@ -462,7 +492,7 @@ class ELMKernel(MLTools):
                 optimal_parameters, details, _ = \
                     optunity.minimize(wrapper_2param,
                                       solver_name="cma-es",
-                                      num_evals=50,
+                                      num_evals=eval,
                                       param_c=param_ranges[0],
                                       param_kernel1=param_ranges[1],
                                       param_kernel2=param_ranges[2])
@@ -473,7 +503,7 @@ class ELMKernel(MLTools):
             if details[0] < temp_error:
                 temp_error = details[0]
 
-                if min_f == "accuracy":
+                if of == "accuracy":
                     best_function_error = 1 / temp_error
                 else:
                     best_function_error = temp_error
@@ -495,7 +525,7 @@ class ELMKernel(MLTools):
                 # print("best: ", best_param_kernel_function,
                 #       best_function_error, best_param_c, best_param_kernel_param)
 
-            if min_f == "accuracy":
+            if of == "accuracy":
                 print("Kernel function: ", kernel_function,
                       " best cv value: ", 1/details[0])
             else:

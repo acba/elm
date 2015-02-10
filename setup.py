@@ -1,13 +1,31 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-try:
-    from setuptools import setup
-except ImportError:
-    from distutils.core import setup
-
 import sys
+import io
+import os
+import re
+
+from setuptools import setup
+from setuptools import find_packages
 from setuptools.command.test import test as TestCommand
+
+
+def read(*names, **kwargs):
+    with io.open(
+        os.path.join(os.path.dirname(__file__), *names),
+        encoding=kwargs.get("encoding", "utf8")
+    ) as fp:
+        return fp.read()
+
+
+def find_version(*file_paths):
+    version_file = read(*file_paths)
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
+                              version_file, re.M)
+    if version_match:
+        return version_match.group(1)
+    raise RuntimeError("Unable to find version string.")
 
 
 class PyTest(TestCommand):
@@ -36,19 +54,18 @@ requirements = [
 
 setup(
     name='elm',
-    version="0.1.0",
+    version=find_version("elm/__init__.py"),
     description="Python Extreme Learning Machine (ELM) is a machine learning "
                 "technique used for classification/regression tasks.",
     long_description=readme + '\n\n' + history,
     author="Augusto Almeida",
     author_email='acba@cin.ufpe.br',
     url='https://github.com/acba/elm',
-    packages=['elm'],
+    packages=find_packages(exclude=['contrib', 'docs', 'tests*']),
     package_dir={'elm':  'elm'},
     include_package_data=True,
     install_requires=requirements,
-    dependency_links=['https://github.com/claesenm/optunity/archive/'
-                      'master.zip#egg=optunity-1.0.2'],
+    dependency_links=['https://github.com/claesenm/optunity/archive/master.zip#egg=optunity-1.0.2'],
     license="BSD",
     zip_safe=False,
     keywords='elm, machine learning, artificial intelligence, ai, regression, \
@@ -58,6 +75,7 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
         'Natural Language :: English',
+        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.4',
         'Topic :: Software Development',

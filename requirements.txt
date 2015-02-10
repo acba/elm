@@ -1,5 +1,5 @@
 numpy==1.9.1
 deap==1.0.1
--e git+https://github.com/claesenm/optunity.git@842e5b951caf5b37b8a612156208fb12bb705c88#egg=optunity-master
+-e git+https://github.com/claesenm/optunity.git#egg=optunity-master
 sphinx_rtd_theme==0.1.6
 sphinxcontrib-napoleon==0.2.9

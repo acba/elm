@@ -4,6 +4,7 @@
 *.so
 
 # Packages
+*.eggs
 *.egg
 *.egg-info
 dist
@@ -50,3 +51,4 @@ docs/_build
 # Dev environment
 env/
 .idea/
+*.bak
