@@ -1,14 +1,21 @@
+# -*- coding: utf-8 -*-
+
 """
     This file contains MLTools class and all developed methods.
 """
 
-__author__ = 'acba'
+# Python2 support
+from __future__ import unicode_literals
+from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
+
 
 import numpy as np
 import pickle
 
 
-class MLTools:
+class MLTools(object):
     """
         A Python implementation of several methods needed for machine learning
         classification/regression.
@@ -221,7 +228,7 @@ class MLTools:
         return self
 
 
-class Error:
+class Error(object):
     """
         Error is a class that saves expected and predicted values to calculate
         error metrics.
@@ -529,7 +536,7 @@ class Error:
         return sw_statistic, sw_p_value
 
 
-class CVError:
+class CVError(object):
     """
         CVError is a class that saves :class:`Error` objects from all folds
         of a cross-validation method.

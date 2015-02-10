@@ -33,7 +33,7 @@ def test_elmk_boston():
 
     try:
         # search for best parameter for this dataset
-        # elmk.search_param(data, cv="kfold", min_f="rmse")
+        # elmk.search_param(data, cv="kfold", of="rmse")
 
         # split data in training and testing sets
         tr_set, te_set = elm.split_sets(data, training_percent=.8, perm=True)
@@ -61,7 +61,7 @@ def test_elmk_diabetes():
 
     try:
         # search for best parameter for this dataset
-        # elmk.search_param(data, cv="kfold", min_f="rmse")
+        # elmk.search_param(data, cv="kfold", of="rmse")
 
         # split data in training and testing sets
         tr_set, te_set = elm.split_sets(data, training_percent=.8, perm=True)
@@ -89,7 +89,7 @@ def test_elmr_boston():
 
     try:
         # search for best parameter for this dataset
-        # elmr.search_param(data, cv="kfold", min_f="rmse")
+        # elmr.search_param(data, cv="kfold", of="rmse")
 
         # split data in training and testing sets
         tr_set, te_set = elm.split_sets(data, training_percent=.8, perm=True)
@@ -117,7 +117,7 @@ def test_elmr_diabetes():
 
     try:
         # search for best parameter for this dataset
-        # elmr.search_param(data, cv="kfold", min_f="rmse")
+        # elmr.search_param(data, cv="kfold", of="rmse")
 
         # split data in training and testing sets
         tr_set, te_set = elm.split_sets(data, training_percent=.8, perm=True)

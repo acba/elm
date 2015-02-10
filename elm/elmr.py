@@ -4,17 +4,23 @@
     This file contains ELMKernel classes and all developed methods.
 """
 
-import numpy as np
-import optunity
+# Python2 support
+from __future__ import unicode_literals
+from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
 
 from .mltools import *
 
-try:
-    import configparser
-except ImportError:
-    import ConfigParser as configparser
-
+import numpy as np
+import optunity
 import ast
+
+import sys
+if sys.version_info < (3, 0):
+    import ConfigParser as configparser
+else:
+    import configparser
 
 try:
     from scipy.special import expit
@@ -22,6 +28,10 @@ except ImportError:
     _SCIPY = 0
 else:
     _SCIPY = 1
+
+# Find configuration file
+from pkg_resources import Requirement, resource_filename
+_ELMR_CONFIG = resource_filename(Requirement.parse("elm"), "elm/elmr.cfg")
 
 
 class ELMRandom(MLTools):
@@ -102,9 +112,9 @@ class ELMRandom(MLTools):
                 >>> elmr = elm.ELMRandom(params)
 
         """
-        super().__init__()
+        super(self.__class__, self).__init__()
 
-        self.available_functions = ["sigmoid"]
+        self.available_functions = ["sigmoid", "multiquadric"]
 
         self.regressor_name = "elmr"
 
@@ -277,7 +287,7 @@ class ELMRandom(MLTools):
     # ########################
 
     def search_param(self, database, dataprocess=None, path_filename=("", ""),
-                     save=False, cv="ts", min_f="rmse", f=None):
+                     save=False, cv="ts", of="rmse", f=None, eval=50):
         """
             Search best hyperparameters for classifier/regressor based on
             optunity algorithms.
@@ -291,11 +301,12 @@ class ELMRandom(MLTools):
                 path_filename (tuple): *TODO*.
                 save (bool): *TODO*.
                 cv (str): Cross-validation method. Defaults to "ts".
-                min_f (str): Objective function to be minimized at
+                of (str): Objective function to be minimized at
                     optunity.minimize. Defaults to "rmse".
                 f (list of str): a list of functions to be used by the
                     search. Defaults to None, this set all available
                     functions.
+                eval (int): Number of steps (evaluations) to optunity algorithm.
 
             Each set of hyperparameters will perform a cross-validation
             method chosen by param cv.
@@ -307,7 +318,7 @@ class ELMRandom(MLTools):
                 - "kfold" :func:`mltools.kfold_cross_validation()`
                     Perform a k-fold cross-validation.
 
-            Available *min_f* function:
+            Available *of* function:
                 - "accuracy", "rmse", "mape", "me".
 
 
@@ -326,18 +337,30 @@ class ELMRandom(MLTools):
         print("##### Start search #####")
 
         config = configparser.ConfigParser()
-        config.read("elm/elmr.conf")
+        if sys.version_info < (3, 0):
+            config.readfp(open(_ELMR_CONFIG))
+        else:
+            config.read_file(open(_ELMR_CONFIG))
 
         best_function_error = 99999.9
+        temp_error = best_function_error
         best_param_function = ""
         best_param_c = 0
+        best_param_l = 0
         for function in search_functions:
 
-            function_config = config["DEFAULT"]
-            c_range = ast.literal_eval(function_config["elmr_c_range"])
-            neurons = ast.literal_eval(function_config["elmr_neurons"])
+            if sys.version_info < (3, 0):
+                elmr_c_range = ast.literal_eval(config.get("DEFAULT",
+                                                           "elmr_c_range"))
 
-            param_ranges = [[c_range[0][0], c_range[0][1]]]
+                neurons = config.getint("DEFAULT", "elmr_neurons")
+
+            else:
+                function_config = config["DEFAULT"]
+                elmr_c_range = ast.literal_eval(function_config["elmr_c_range"])
+                neurons = ast.literal_eval(function_config["elmr_neurons"])
+
+            param_ranges = [[elmr_c_range[0][0], elmr_c_range[0][1]]]
 
             def wrapper_opt(param_c):
                 """
@@ -367,10 +390,10 @@ class ELMRandom(MLTools):
                 else:
                     raise Exception("Invalid type of cross-validation.")
 
-                if min_f == "accuracy":
+                if of == "accuracy":
                     util = 1 / cv_te_error.get_accuracy()
                 else:
-                    util = cv_te_error.get(min_f)
+                    util = cv_te_error.get(of)
 
                 # print("c:", param_c, "util: ", util)
                 return util
@@ -378,17 +401,28 @@ class ELMRandom(MLTools):
             optimal_pars, details, _ =  \
                 optunity.minimize(wrapper_opt,
                                   solver_name="cma-es",
-                                  num_evals=30,
+                                  num_evals=eval,
                                   param_c=param_ranges[0])
 
-            if details[0] < best_function_error:
-                best_function_error = details[0]
+            # Save best function result
+            if details[0] < temp_error:
+                temp_error = details[0]
 
-                if min_f == "accuracy":
-                    best_function_error = 1 / best_function_error
+                if of == "accuracy":
+                    best_function_error = 1 / temp_error
+                else:
+                    best_function_error = temp_error
 
                 best_param_function = function
                 best_param_c = optimal_pars["param_c"]
+                best_param_l = neurons
+
+            if of == "accuracy":
+                print("Function: ", function,
+                      " best cv value: ", 1/details[0])
+            else:
+                print("Function: ", function,
+                      " best cv value: ", details[0])
 
         # MLTools Attribute
         self.cv_best_rmse = best_function_error
@@ -396,6 +430,7 @@ class ELMRandom(MLTools):
         # elmr Attribute
         self.param_function = best_param_function
         self.param_c = best_param_c
+        self.param_l = best_param_l
 
         print("##### Search complete #####")
         self.print_parameters()
