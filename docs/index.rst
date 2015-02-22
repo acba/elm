@@ -21,9 +21,10 @@ API Reference
 -------------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    elm
+   mltools
 
 
 Project Info
@@ -37,10 +38,9 @@ Project Info
    history
 
 
-Indices and tables
-==================
+Index
+-----
 
 * :ref:`genindex`
 * :ref:`modindex`
-* :ref:`search`
 

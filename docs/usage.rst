@@ -5,13 +5,14 @@ Usage
 To use Python Extreme Learning Machine (ELM) in a project::
 
     import elm
+    from elm import mltools
 
     # download an example dataset from
     # https://github.com/acba/elm/tree/develop/tests/data
 
 
     # load dataset
-    data = elm.read("iris.data")
+    data = mltools.read("iris.data")
 
     # create a classifier
     elmk = elm.ELMKernel()
@@ -24,7 +25,7 @@ To use Python Extreme Learning Machine (ELM) in a project::
 
     # split data in training and testing sets
     # use 80% of dataset to training and shuffle data before splitting
-    tr_set, te_set = elm.split_sets(data, training_percent=.8, perm=True)
+    tr_set, te_set = mltools.split_sets(data, training_percent=.8, perm=True)
 
     #train and test
     # results are Error objects

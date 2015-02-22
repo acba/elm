@@ -50,5 +50,7 @@ docs/_build
 
 # Dev environment
 env/
+tmp/
 .idea/
 *.bak
+sc.py

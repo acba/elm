@@ -10,24 +10,33 @@ from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 
-from .mltools import *
+from .mltools import MLTools
+from .mltools import kfold_cross_validation
+from .mltools import time_series_cross_validation
+from .mltools import copy_doc_of
 
 import numpy as np
-import optunity
-import ast
 
+try:
+    import optunity
+except ImportError:
+    _OPTUNITY_AVAILABLE = 0
+else:
+    _OPTUNITY_AVAILABLE = 1
+
+try:
+    from scipy.special import expit
+except ImportError:
+    _SCIPY_SPECIAL_AVAILABLE = 0
+else:
+    _SCIPY_SPECIAL_AVAILABLE = 1
+
+import ast
 import sys
 if sys.version_info < (3, 0):
     import ConfigParser as configparser
 else:
     import configparser
-
-try:
-    from scipy.special import expit
-except ImportError:
-    _SCIPY = 0
-else:
-    _SCIPY = 1
 
 # Find configuration file
 from pkg_resources import Requirement, resource_filename
@@ -56,8 +65,10 @@ class ELMRandom(MLTools):
 
 
         Note:
-            [1] Paper reference: Huang, 2012, "Extreme Learning Machine for
-            Regression and  Multiclass Classification"
+            [1] Paper reference: G.-B. Huang, H. Zhou, X. Ding, and R. Zhang,
+            “Extreme Learning Machine for Regression and Multiclass
+            Classification,” IEEE Transactions on Systems, Man, and Cybernetics
+            - Part B: Cybernetics,  vol. 42, no. 2, pp. 513-529, 2012.
 
         Attributes:
             input_weight (numpy.ndarray): a random matrix (*Lxd-1*) needed
@@ -219,7 +230,7 @@ class ELMRandom(MLTools):
             return
 
         if function_type == "sigmoid" or function_type == "sig":
-            if _SCIPY:
+            if _SCIPY_SPECIAL_AVAILABLE:
                 h_matrix = expit(temp)
             else:
                 h_matrix = 1 / (1 + np.exp(-temp))
@@ -287,7 +298,8 @@ class ELMRandom(MLTools):
     # ########################
 
     def search_param(self, database, dataprocess=None, path_filename=("", ""),
-                     save=False, cv="ts", of="rmse", f=None, eval=50):
+                     save=False, cv="ts", cv_nfolds=10, of="rmse", f=None,
+                     opt_f="cma-es", eval=50, print_log=True):
         """
             Search best hyperparameters for classifier/regressor based on
             optunity algorithms.
@@ -301,12 +313,20 @@ class ELMRandom(MLTools):
                 path_filename (tuple): *TODO*.
                 save (bool): *TODO*.
                 cv (str): Cross-validation method. Defaults to "ts".
+                cv_nfolds (int): Number of Cross-validation folds. Defaults
+                    to 10.
                 of (str): Objective function to be minimized at
                     optunity.minimize. Defaults to "rmse".
                 f (list of str): a list of functions to be used by the
                     search. Defaults to None, this set all available
                     functions.
+                opt_f (str): Name of optunity search algorithm. Defaults to
+                    "cma-es".
                 eval (int): Number of steps (evaluations) to optunity algorithm.
+
+            Returns:
+                list: list of best hyperparameters.
+
 
             Each set of hyperparameters will perform a cross-validation
             method chosen by param cv.
@@ -326,6 +346,10 @@ class ELMRandom(MLTools):
                 http://optunity.readthedocs.org/en/latest/user/index.html
         """
 
+        if not _OPTUNITY_AVAILABLE:
+            raise Exception("Please install 'deap' and 'optunity' library to \
+                             perform search_param.")
+
         if f is None:
             search_functions = self.available_functions
         elif type(f) is list:
@@ -333,8 +357,9 @@ class ELMRandom(MLTools):
         else:
             raise Exception("Invalid format for argument 'f'.")
 
-        print(self.regressor_name)
-        print("##### Start search #####")
+        if print_log:
+            print(self.regressor_name)
+            print("##### Start search #####")
 
         config = configparser.ConfigParser()
         if sys.version_info < (3, 0):
@@ -374,7 +399,7 @@ class ELMRandom(MLTools):
                                                              2 ** param_c,
                                                              neurons,
                                                              False],
-                                                     number_folds=10,
+                                                     number_folds=cv_nfolds,
                                                      dataprocess=dataprocess)
 
                 elif cv == "kfold":
@@ -384,14 +409,14 @@ class ELMRandom(MLTools):
                                                        2 ** param_c,
                                                        neurons,
                                                        False],
-                                               number_folds=10,
+                                               number_folds=cv_nfolds,
                                                dataprocess=dataprocess)
 
                 else:
                     raise Exception("Invalid type of cross-validation.")
 
-                if of == "accuracy":
-                    util = 1 / cv_te_error.get_accuracy()
+                if of == "accuracy" or of == "hr" or of == "hr+" or of == "hr-":
+                    util = 1 / cv_te_error.get(of)
                 else:
                     util = cv_te_error.get(of)
 
@@ -400,7 +425,7 @@ class ELMRandom(MLTools):
 
             optimal_pars, details, _ =  \
                 optunity.minimize(wrapper_opt,
-                                  solver_name="cma-es",
+                                  solver_name=opt_f,
                                   num_evals=eval,
                                   param_c=param_ranges[0])
 
@@ -408,7 +433,7 @@ class ELMRandom(MLTools):
             if details[0] < temp_error:
                 temp_error = details[0]
 
-                if of == "accuracy":
+                if of == "accuracy" or of == "hr" or of == "hr+" or of == "hr-":
                     best_function_error = 1 / temp_error
                 else:
                     best_function_error = temp_error
@@ -417,25 +442,36 @@ class ELMRandom(MLTools):
                 best_param_c = optimal_pars["param_c"]
                 best_param_l = neurons
 
-            if of == "accuracy":
-                print("Function: ", function,
-                      " best cv value: ", 1/details[0])
-            else:
-                print("Function: ", function,
-                      " best cv value: ", details[0])
-
-        # MLTools Attribute
-        self.cv_best_rmse = best_function_error
+            if print_log:
+                if of == "accuracy" or of == "hr" or of == "hr+" or of == "hr-":
+                    print("Function: ", function,
+                          " best cv value: ", 1/details[0])
+                else:
+                    print("Function: ", function,
+                          " best cv value: ", details[0])
 
         # elmr Attribute
         self.param_function = best_param_function
         self.param_c = best_param_c
         self.param_l = best_param_l
 
-        print("##### Search complete #####")
-        self.print_parameters()
+        params = [self.param_function,
+                  self.param_c,
+                  self.param_l,
+                  self.param_opt]
 
-        return None
+        # MLTools Attribute
+        self.has_cv = True
+        self.cv_name = cv
+        self.cv_error_name = of
+        self.cv_best_error = best_function_error
+        self.cv_best_params = params
+
+        if print_log:
+            print("##### Search complete #####")
+            self.print_parameters()
+
+        return params
 
     def print_parameters(self):
         """
@@ -448,10 +484,7 @@ class ELMRandom(MLTools):
         print("Regularization coefficient: ", self.param_c)
         print("Function: ", self.param_function)
         print("Hidden Neurons: ", self.param_l)
-        print()
-        print("CV error: ", self.cv_best_rmse)
-        print("")
-        print()
+        self.print_cv_log()
 
     def get_available_functions(self):
         """
@@ -460,60 +493,24 @@ class ELMRandom(MLTools):
 
         return self.available_functions
 
+    @copy_doc_of(MLTools._ml_train)
     def train(self, training_matrix, params=[]):
-        """
-            Calculate output_weight values needed to test/predict data.
-
-            If params is provided, this method will use at training phase.
-            Else, it will use the default value provided at object
-            initialization.
-
-            Arguments:
-                training_matrix (numpy.ndarray): a matrix containing all
-                    patterns that will be used for training.
-                params (list): a list of parameters defined at
-                    :func:`ELMKernel.__init__`
-
-            Returns:
-                :class:`Error`: training error object containing expected,
-                    predicted targets and all error metrics.
-
-            Note:
-                Training matrix must have target variables as the first column.
-        """
-
         return self._ml_train(training_matrix, params)
 
+    @copy_doc_of(MLTools._ml_test)
     def test(self, testing_matrix, predicting=False):
-        """
-            Calculate test predicted values based on previous training.
-
-            Args:
-                testing_matrix (numpy.ndarray): a matrix containing all
-                    patterns that will be used for testing.
-                predicting (bool): Don't set.
-
-            Returns:
-                :class:`Error`: testing error object containing expected,
-                    predicted targets and all error metrics.
-
-            Note:
-                Testing matrix must have target variables as the first column.
-        """
-
         return self._ml_test(testing_matrix, predicting)
-
 
     @copy_doc_of(MLTools._ml_predict)
     def predict(self, horizon=1):
-
         return self._ml_predict(horizon)
 
-    @copy_doc_of(MLTools._ml_train_iterative)
-    def train_iterative(self, database_matrix, params=[], sliding_window=168,
-                        k=1):
+    @copy_doc_of(MLTools._ml_train_it)
+    def train_it(self, database_matrix, params=[], dataprocess=None,
+                 sliding_window=168, k=1, search=False):
+        return self._ml_train_it(database_matrix, params, dataprocess,
+                                 sliding_window, k, search)
 
-        return self._ml_train_iterative(database_matrix, params,
-                                        sliding_window, k)
-
-
+    @copy_doc_of(MLTools._ml_predict_it)
+    def predict_it(self, horizon=1, dataprocess=None):
+        return self._ml_predict_it(horizon, dataprocess)

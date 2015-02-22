@@ -17,13 +17,13 @@
 """
 
 import elm
-import numpy as np
+from elm import mltools
 
 
 def test_elmk_iris():
 
     # load dataset
-    data = elm.read("tests/data/iris.data")
+    data = mltools.read("tests/data/iris.data")
 
     # create a regressor
     elmk = elm.ELMKernel()
@@ -33,11 +33,11 @@ def test_elmk_iris():
         elmk.search_param(data, cv="kfold", of="accuracy", eval=10)
 
         # split data in training and testing sets
-        tr_set, te_set = elm.split_sets(data, training_percent=.8, perm=True)
+        tr, te = mltools.split_sets(data, training_percent=.8, perm=True)
 
         #train and test
-        tr_result = elmk.train(tr_set)
-        te_result = elmk.test(te_set)
+        tr_result = elmk.train(tr)
+        te_result = elmk.test(te)
     except:
         ERROR = 1
     else:
@@ -52,7 +52,7 @@ def test_elmk_iris():
 def test_elmr_iris():
 
     # load dataset
-    data = elm.read("tests/data/iris.data")
+    data = mltools.read("tests/data/iris.data")
 
     # create a regressor
     elmr = elm.ELMRandom()
@@ -62,11 +62,11 @@ def test_elmr_iris():
         elmr.search_param(data, cv="kfold", of="accuracy", eval=10)
 
         # split data in training and testing sets
-        tr_set, te_set = elm.split_sets(data, training_percent=.8, perm=True)
+        tr, te = mltools.split_sets(data, training_percent=.8, perm=True)
 
         #train and test
-        tr_result = elmr.train(tr_set)
-        te_result = elmr.test(te_set)
+        tr_result = elmr.train(tr)
+        te_result = elmr.test(te)
     except:
         ERROR = 1
     else:

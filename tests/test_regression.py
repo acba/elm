@@ -21,12 +21,13 @@
 """
 
 import elm
+from elm import mltools
 
 
 def test_elmk_boston():
 
     # load dataset
-    data = elm.read("tests/data/boston.data")
+    data = mltools.read("tests/data/boston.data")
 
     # create a regressor
     elmk = elm.ELMKernel()
@@ -36,11 +37,12 @@ def test_elmk_boston():
         # elmk.search_param(data, cv="kfold", of="rmse")
 
         # split data in training and testing sets
-        tr_set, te_set = elm.split_sets(data, training_percent=.8, perm=True)
+        tr, te = mltools.split_sets(data, training_percent=.8, perm=True)
 
         #train and test
-        tr_result = elmk.train(tr_set)
-        te_result = elmk.test(te_set)
+        tr_result = elmk.train(tr)
+        te_result = elmk.test(te)
+
     except:
         ERROR = 1
     else:
@@ -54,7 +56,7 @@ def test_elmk_boston():
 def test_elmk_diabetes():
 
     # load dataset
-    data = elm.read("tests/data/diabetes.data")
+    data = mltools.read("tests/data/diabetes.data")
 
     # create a regressor
     elmk = elm.ELMKernel()
@@ -64,11 +66,11 @@ def test_elmk_diabetes():
         # elmk.search_param(data, cv="kfold", of="rmse")
 
         # split data in training and testing sets
-        tr_set, te_set = elm.split_sets(data, training_percent=.8, perm=True)
+        tr, te = mltools.split_sets(data, training_percent=.8, perm=True)
 
         #train and test
-        tr_result = elmk.train(tr_set)
-        te_result = elmk.test(te_set)
+        tr_result = elmk.train(tr)
+        te_result = elmk.test(te)
 
     except:
         ERROR = 1
@@ -82,7 +84,7 @@ def test_elmk_diabetes():
 def test_elmr_boston():
 
     # load dataset
-    data = elm.read("tests/data/boston.data")
+    data = mltools.read("tests/data/boston.data")
 
     # create a regressor
     elmr = elm.ELMRandom()
@@ -92,11 +94,11 @@ def test_elmr_boston():
         # elmr.search_param(data, cv="kfold", of="rmse")
 
         # split data in training and testing sets
-        tr_set, te_set = elm.split_sets(data, training_percent=.8, perm=True)
+        tr, te = mltools.split_sets(data, training_percent=.8, perm=True)
 
         #train and test
-        tr_result = elmr.train(tr_set)
-        te_result = elmr.test(te_set)
+        tr_result = elmr.train(tr)
+        te_result = elmr.test(te)
 
     except:
         ERROR = 1
@@ -110,7 +112,7 @@ def test_elmr_boston():
 def test_elmr_diabetes():
 
     # load dataset
-    data = elm.read("tests/data/diabetes.data")
+    data = mltools.read("tests/data/diabetes.data")
 
     # create a regressor
     elmr = elm.ELMRandom()
@@ -120,11 +122,11 @@ def test_elmr_diabetes():
         # elmr.search_param(data, cv="kfold", of="rmse")
 
         # split data in training and testing sets
-        tr_set, te_set = elm.split_sets(data, training_percent=.8, perm=True)
+        tr, te = mltools.split_sets(data, training_percent=.8, perm=True)
 
         #train and test
-        tr_result = elmr.train(tr_set)
-        te_result = elmr.test(te_set)
+        tr_result = elmr.train(tr)
+        te_result = elmr.test(te)
 
     except:
         ERROR = 1

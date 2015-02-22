@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
 """
+    elm.elmk
+    --------
+
     This file contains ELMKernel classes and all developed methods.
 """
 
@@ -10,12 +13,22 @@ from __future__ import division
 from __future__ import absolute_import
 from __future__ import print_function
 
-from .mltools import *
+from .mltools import MLTools
+from .mltools import kfold_cross_validation
+from .mltools import time_series_cross_validation
+from .mltools import copy_doc_of
 
 import numpy as np
-import optunity
-import ast
 
+try:
+    import optunity
+except ImportError:
+    _OPTUNITY_AVAILABLE = 0
+else:
+    _OPTUNITY_AVAILABLE = 1
+
+
+import ast
 import sys
 if sys.version_info < (3, 0):
     import ConfigParser as configparser
@@ -50,8 +63,10 @@ class ELMKernel(MLTools):
 
 
         Note:
-            [1] Paper reference: Huang, 2012, "Extreme Learning Machine for
-            Regression and  Multiclass Classification"
+            [1] Paper reference: G.-B. Huang, H. Zhou, X. Ding, and R. Zhang,
+            “Extreme Learning Machine for Regression and Multiclass
+            Classification,” IEEE Transactions on Systems, Man, and Cybernetics
+            - Part B: Cybernetics,  vol. 42, no. 2, pp. 513-529, 2012.
 
         Attributes:
             output_weight (numpy.ndarray): a column vector (*Nx1*) calculated
@@ -109,12 +124,10 @@ class ELMKernel(MLTools):
 
         self.available_kernel_functions = ["rbf", "linear", "poly"]
 
+        # Default parameters
         self.default_param_kernel_function = "rbf"
         self.default_param_c = 9
         self.default_param_kernel_params = [-15]
-
-        self.output_weight = []
-        self.training_patterns = []
 
         # Initialized parameters values
         if not params:
@@ -126,12 +139,16 @@ class ELMKernel(MLTools):
             self.param_c = params[1]
             self.param_kernel_params = params[2]
 
+        self.output_weight = []
+        self.training_patterns = []
+
     # ########################
     # Private Methods
     # ########################
 
     def _kernel_matrix(self, training_patterns, kernel_type, kernel_param,
-                        test_patterns=None):
+                       test_patterns=None):
+
         """ Calculate the Omega matrix (kernel matrix).
 
             If test_patterns is None, then the training Omega matrix will be
@@ -195,11 +212,14 @@ class ELMKernel(MLTools):
             kernel_param[1] = round(kernel_param[1])
 
             if test_patterns is None:
-                temp = np.dot(training_patterns, training_patterns.conj().T)+ kernel_param[0]
+                temp = np.dot(training_patterns, training_patterns.conj().T) + \
+                       kernel_param[0]
 
                 omega = temp ** kernel_param[1]
             else:
-                temp = np.dot(training_patterns, test_patterns.conj().T)+ kernel_param[0]
+                temp = np.dot(training_patterns, test_patterns.conj().T) + \
+                       kernel_param[0]
+
                 omega = temp ** kernel_param[1]
 
         else:
@@ -228,8 +248,8 @@ class ELMKernel(MLTools):
         # Training phase
 
         omega_train = self._kernel_matrix(self.training_patterns,
-                                           self.param_kernel_function,
-                                           self.param_kernel_params)
+                                          self.param_kernel_function,
+                                          self.param_kernel_params)
 
         self.output_weight = np.linalg.solve(
             (omega_train + np.eye(number_training_patterns) /
@@ -275,12 +295,11 @@ class ELMKernel(MLTools):
         print("Regularization coefficient: ", self.param_c)
         print("Kernel Function: ", self.param_kernel_function)
         print("Kernel parameters: ", self.param_kernel_params)
-        print()
-        print("CV error: ", self.cv_best_rmse)
-        print()
+        self.print_cv_log()
 
     def search_param(self, database, dataprocess=None, path_filename=("", ""),
-                     save=False, cv="ts", of="rmse", kf=None, eval=50):
+                     save=False, cv="ts", cv_nfolds=10, of="rmse", kf=None,
+                     opt_f="cma-es", eval=50, print_log=True):
         """
             Search best hyperparameters for classifier/regressor based on
             optunity algorithms.
@@ -294,12 +313,18 @@ class ELMKernel(MLTools):
                 path_filename (tuple): *TODO*.
                 save (bool): *TODO*.
                 cv (str): Cross-validation method. Defaults to "ts".
+                cv_nfolds (int): Number of Cross-validation folds. Defaults
+                    to 10.
                 of (str): Objective function to be minimized at
                     optunity.minimize. Defaults to "rmse".
                 kf (list of str): a list of kernel functions to be used by
                     the search. Defaults to None, this set all available
                     functions.
+                opt_f (str): Name of optunity search algorithm. Defaults to
+                    "cma-es".
                 eval (int): Number of steps (evaluations) to optunity algorithm.
+
+            Returns:
 
 
             Each set of hyperparameters will perform a cross-validation
@@ -321,6 +346,10 @@ class ELMKernel(MLTools):
                 http://optunity.readthedocs.org/en/latest/user/index.html
         """
 
+        if not _OPTUNITY_AVAILABLE:
+            raise Exception("Please install 'deap' and 'optunity' library to \
+                             perform search_param.")
+
         if kf is None:
             search_kernel_functions = self.available_kernel_functions
         elif type(kf) is list:
@@ -328,8 +357,9 @@ class ELMKernel(MLTools):
         else:
             raise Exception("Invalid format for argument 'kf'.")
 
-        print(self.regressor_name)
-        print("##### Start search #####")
+        if print_log:
+            print(self.regressor_name)
+            print("##### Start search #####")
 
         config = configparser.ConfigParser()
 
@@ -379,7 +409,7 @@ class ELMKernel(MLTools):
                                                      [kernel_function,
                                                       param_c,
                                                       list([])],
-                                                     number_folds=10,
+                                                     number_folds=cv_nfolds,
                                                      dataprocess=dataprocess)
 
                 elif cv == "kfold":
@@ -388,14 +418,14 @@ class ELMKernel(MLTools):
                                                [kernel_function,
                                                 param_c,
                                                 list([])],
-                                               number_folds=10,
+                                               number_folds=cv_nfolds,
                                                dataprocess=dataprocess)
 
                 else:
                     raise Exception("Invalid type of cross-validation.")
 
-                if of == "accuracy":
-                    util = 1 / cv_te_error.get_accuracy()
+                if of == "accuracy" or of == "hr" or of == "hr+" or of == "hr-":
+                    util = 1 / cv_te_error.get(of)
                 else:
                     util = cv_te_error.get(of)
 
@@ -413,7 +443,7 @@ class ELMKernel(MLTools):
                                                      [kernel_function,
                                                       param_c,
                                                       list([param_kernel])],
-                                                     number_folds=10,
+                                                     number_folds=cv_nfolds,
                                                      dataprocess=dataprocess)
 
                 elif cv == "kfold":
@@ -422,14 +452,14 @@ class ELMKernel(MLTools):
                                                [kernel_function,
                                                 param_c,
                                                 list([param_kernel])],
-                                               number_folds=10,
+                                               number_folds=cv_nfolds,
                                                dataprocess=dataprocess)
 
                 else:
                     raise Exception("Invalid type of cross-validation.")
 
-                if of == "accuracy":
-                    util = 1 / cv_te_error.get_accuracy()
+                if of == "accuracy" or of == "hr" or of == "hr+" or of == "hr-":
+                    util = 1 / cv_te_error.get(of)
                 else:
                     util = cv_te_error.get(of)
 
@@ -448,7 +478,7 @@ class ELMKernel(MLTools):
                                                       param_c,
                                                       list([param_kernel1,
                                                             param_kernel2])],
-                                                     number_folds=10,
+                                                     number_folds=cv_nfolds,
                                                      dataprocess=dataprocess)
 
                 elif cv == "kfold":
@@ -458,14 +488,14 @@ class ELMKernel(MLTools):
                                                 param_c,
                                                 list([param_kernel1,
                                                       param_kernel2])],
-                                               number_folds=10,
+                                               number_folds=cv_nfolds,
                                                dataprocess=dataprocess)
 
                 else:
                     raise Exception("Invalid type of cross-validation.")
 
-                if of == "accuracy":
-                    util = 1 / cv_te_error.get_accuracy()
+                if of == "accuracy" or of == "hr" or of == "hr+" or of == "hr-":
+                    util = 1 / cv_te_error.get(of)
                 else:
                     util = cv_te_error.get(of)
 
@@ -476,14 +506,14 @@ class ELMKernel(MLTools):
             if kernel_function == "linear":
                 optimal_parameters, details, _ = \
                     optunity.minimize(wrapper_0param,
-                                      solver_name="cma-es",
+                                      solver_name=opt_f,
                                       num_evals=eval,
                                       param_c=param_ranges[0])
 
             elif kernel_function == "rbf":
                 optimal_parameters, details, _ = \
                     optunity.minimize(wrapper_1param,
-                                      solver_name="cma-es",
+                                      solver_name=opt_f,
                                       num_evals=eval,
                                       param_c=param_ranges[0],
                                       param_kernel=param_ranges[1])
@@ -491,7 +521,7 @@ class ELMKernel(MLTools):
             elif kernel_function == "poly":
                 optimal_parameters, details, _ = \
                     optunity.minimize(wrapper_2param,
-                                      solver_name="cma-es",
+                                      solver_name=opt_f,
                                       num_evals=eval,
                                       param_c=param_ranges[0],
                                       param_kernel1=param_ranges[1],
@@ -503,7 +533,7 @@ class ELMKernel(MLTools):
             if details[0] < temp_error:
                 temp_error = details[0]
 
-                if of == "accuracy":
+                if of == "accuracy" or of == "hr" or of == "hr+" or of == "hr-":
                     best_function_error = 1 / temp_error
                 else:
                     best_function_error = temp_error
@@ -518,90 +548,63 @@ class ELMKernel(MLTools):
                 elif best_param_kernel_function == "poly":
                     best_param_kernel_param = \
                         [optimal_parameters["param_kernel1"],
-                         optimal_parameters["param_kernel2"]]
+                         round(optimal_parameters["param_kernel2"])]
                 else:
                     raise Exception("Invalid kernel function.")
 
                 # print("best: ", best_param_kernel_function,
                 #       best_function_error, best_param_c, best_param_kernel_param)
 
-            if of == "accuracy":
-                print("Kernel function: ", kernel_function,
-                      " best cv value: ", 1/details[0])
-            else:
-                print("Kernel function: ", kernel_function,
-                      " best cv value: ", details[0])
-
-
-        # MLTools attribute
-        self.cv_best_rmse = best_function_error
+            if print_log:
+                if of == "accuracy" or of == "hr" or of == "hr+" or of == "hr-":
+                    print("Kernel function: ", kernel_function,
+                          " best cv value: ", 1/details[0])
+                else:
+                    print("Kernel function: ", kernel_function,
+                          " best cv value: ", details[0])
 
         # ELM attribute
         self.param_c = best_param_c
         self.param_kernel_function = best_param_kernel_function
         self.param_kernel_params = best_param_kernel_param
 
-        print("##### Search complete #####")
-        self.print_parameters()
+        params = [self.param_kernel_function,
+                  self.param_c,
+                  self.param_kernel_params]
 
-        return None
+        # MLTools Attribute
+        self.has_cv = True
+        self.cv_name = cv
+        self.cv_error_name = of
+        self.cv_best_error = best_function_error
+        self.cv_best_params = params
 
+        if print_log:
+            print("##### Search complete #####")
+            self.print_parameters()
+
+        return params
+
+    @copy_doc_of(MLTools._ml_train)
     def train(self, training_matrix, params=[]):
-        """
-            Calculate output_weight values needed to test/predict data.
-
-            If params is provided, this method will use at training phase.
-            Else, it will use the default value provided at object
-            initialization.
-
-            Arguments:
-                training_matrix (numpy.ndarray): a matrix containing all
-                    patterns that will be used for training.
-                params (list): a list of parameters defined at
-                    :func:`ELMKernel.__init__`
-
-            Returns:
-                :class:`Error`: training error object containing expected,
-                    predicted targets and all error metrics.
-
-            Note:
-                Training matrix must have target variables as the first column.
-
-        """
-
         return self._ml_train(training_matrix, params)
 
+    @copy_doc_of(MLTools._ml_test)
     def test(self, testing_matrix, predicting=False):
-        """
-            Calculate test predicted values based on previous training.
-
-            Args:
-                testing_matrix (numpy.ndarray): a matrix containing all
-                    patterns that will be used for testing.
-                predicting (bool): Don't set.
-
-            Returns:
-                :class:`Error`: testing error object containing expected,
-                    predicted targets and all error metrics.
-
-            Note:
-                Testing matrix must have target variables as the first column.
-        """
-
         return self._ml_test(testing_matrix, predicting)
 
     @copy_doc_of(MLTools._ml_predict)
     def predict(self, horizon=1):
-        # self.__doc__ = self._ml_predict.__doc__
 
         return self._ml_predict(horizon)
 
-    @copy_doc_of(MLTools._ml_train_iterative)
-    def train_iterative(self, database_matrix, params=[],
-                        sliding_window=168, k=1):
-        # self.__doc__ = self._ml_train_iterative.__doc__
+    @copy_doc_of(MLTools._ml_train_it)
+    def train_it(self, database_matrix, params=[], dataprocess=None,
+                 sliding_window=168, k=1, search=False):
+        return self._ml_train_it(database_matrix, params, dataprocess,
+                                 sliding_window, k, search)
 
-        return self._ml_train_iterative(database_matrix, params,
-                                        sliding_window, k)
-
+    @copy_doc_of(MLTools._ml_predict_it)
+    def predict_it(self, horizon=1, dataprocess=None):
+        return self._ml_predict_it(horizon, dataprocess)
 
