@@ -232,7 +232,7 @@ class MLTools(object):
                 data = np.vstack((tr_matrix, te_matrix))
                 params = self.search_param(database=data,
                                            dataprocess=dataprocess,
-                                           cv="ts", cv_nfolds=2, of="rmse",
+                                           cv="ts", cv_nfolds=3, of="rmse",
                                            eval=50, print_log=False)
 
             # Train sliding window dataset
@@ -342,26 +342,12 @@ class MLTools(object):
         try:
             with open(file_name, 'wb') as f:
                 pickle.dump(self.__dict__, f, protocol=pickle.HIGHEST_PROTOCOL)
-                # pickle.dump(self, f, protocol=pickle.HIGHEST_PROTOCOL)
 
         except:
             raise Exception("Error while saving ", file_name)
 
         else:
             print("Saved model as: ", file_name, "\n\n")
-
-        # try:
-        #     # First save all class attributes
-        #
-        #     file = file_name
-        #     with open(file, 'wb') as f:
-        #         pickle.dump(self, f, protocol=pickle.HIGHEST_PROTOCOL)
-        #
-        # except:
-        #     raise Exception("Error while saving ", file_name)
-        #
-        # else:
-        #     print("Saved model as: ", file_name, "\n\n")
 
     def load_model(self, file_name):
         """
@@ -375,16 +361,6 @@ class MLTools(object):
 
         except:
             raise Exception("Error while loading ", file_name)
-
-        # try:
-        #     # First load all class attributes
-        #
-        #     file = file_name
-        #     with open(file, 'rb') as f:
-        #         self = pickle.load(f)
-        #
-        # except:
-        #     raise Exception("Error while loading ", file_name)
 
         return self
 

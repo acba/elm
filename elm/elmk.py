@@ -19,6 +19,7 @@ from .mltools import time_series_cross_validation
 from .mltools import copy_doc_of
 
 import numpy as np
+import scipy.linalg
 
 try:
     import optunity
@@ -250,6 +251,12 @@ class ELMKernel(MLTools):
         omega_train = self._kernel_matrix(self.training_patterns,
                                           self.param_kernel_function,
                                           self.param_kernel_params)
+
+        # print("fy")
+        # self.output_weight = np.dot(
+        #     scipy.linalg.inv((omega_train + np.eye(number_training_patterns) /
+        #                       (2 ** self.param_c))), training_expected_targets)\
+        #     .reshape(-1, 1)
 
         self.output_weight = np.linalg.solve(
             (omega_train + np.eye(number_training_patterns) /

@@ -185,7 +185,8 @@ class Error(object):
         #     self.calc_metrics(self.expected_targets, self.predicted_targets,
         #                       force=True)
 
-        self.calc_metrics(self.expected_targets, self.predicted_targets,
+        self.calc_metrics(self.expected_targets,
+                          self.predicted_targets,
                           force=True)
 
         if _PRETTYTABLE_AVAILABLE:
@@ -203,7 +204,6 @@ class Error(object):
 
         else:
             print("For better table format install 'prettytable' package.")
-
 
             print()
             print("Error | ", "Value")
@@ -330,7 +330,7 @@ class Error(object):
 
         error = (self.expected_targets - self.predicted_targets).flatten()
 
-         # Calculate Shapiro-Wilk normality index
+        # Calculate Shapiro-Wilk normality index
         sw_statistic, sw_p_value = stats.shapiro(error)
 
         return sw_statistic, sw_p_value
