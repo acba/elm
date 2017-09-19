@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 __author__ = 'Augusto Almeida'
-__email__ = 'acba@cin.ufpe.br'
-__version__ = '0.1.1'
+__email__ = 'augustocbenvenuto@gmail.com'
+__version__ = '0.1.2'
 
 from .elmk import ELMKernel
 from .elmr import ELMRandom

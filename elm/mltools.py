@@ -769,7 +769,7 @@ def kfold_cross_validation(ml, database, params, number_folds=10,
     # Number of dimensions considering only 1 output
     n_dim = database.shape[1] - 1
     number_patterns = database.shape[0]
-    fold_size = np.ceil(number_patterns / number_folds)
+    fold_size = int(np.ceil(number_patterns / number_folds))
 
     folds = []
     for k in range(number_folds):

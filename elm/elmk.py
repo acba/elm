@@ -280,7 +280,7 @@ class ELMKernel(MLTools):
         print()
 
     def search_param(self, database, dataprocess=None, path_filename=("", ""),
-                     save=False, cv="ts", of="rmse", kf=None, eval=50):
+                     save=False, cv="ts", of="rmse", kf=None, eval=50, op_solver_name="cma-es"):
         """
             Search best hyperparameters for classifier/regressor based on
             optunity algorithms.
@@ -476,14 +476,14 @@ class ELMKernel(MLTools):
             if kernel_function == "linear":
                 optimal_parameters, details, _ = \
                     optunity.minimize(wrapper_0param,
-                                      solver_name="cma-es",
+                                      solver_name=op_solver_name,
                                       num_evals=eval,
                                       param_c=param_ranges[0])
 
             elif kernel_function == "rbf":
                 optimal_parameters, details, _ = \
                     optunity.minimize(wrapper_1param,
-                                      solver_name="cma-es",
+                                      solver_name=op_solver_name,
                                       num_evals=eval,
                                       param_c=param_ranges[0],
                                       param_kernel=param_ranges[1])
@@ -491,7 +491,7 @@ class ELMKernel(MLTools):
             elif kernel_function == "poly":
                 optimal_parameters, details, _ = \
                     optunity.minimize(wrapper_2param,
-                                      solver_name="cma-es",
+                                      solver_name=op_solver_name,
                                       num_evals=eval,
                                       param_c=param_ranges[0],
                                       param_kernel1=param_ranges[1],

@@ -14,3 +14,9 @@ History
 * Fixed some package issues.
 * Added Python 2.7 support
 * Added extra parameter to search_param method.
+
+0.1.2 (2017-09-19)
+------------------
+
+* Fixed a bug when using search_param.
+* Optunity solver is available when using search_param.

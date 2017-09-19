@@ -47,9 +47,9 @@ with open('HISTORY.rst') as history_file:
     history = history_file.read().replace('.. :changelog:', '')
 
 requirements = [
-    "numpy>=1.9.1",
-    "deap>=1.0.1",
-    "optunity<=1.0.2"
+    "numpy==1.13.1",
+    "deap>=1.0.2",
+    "optunity>=1.1.1"
 ]
 
 setup(
@@ -59,13 +59,12 @@ setup(
                 "technique used for classification/regression tasks.",
     long_description=readme + '\n\n' + history,
     author="Augusto Almeida",
-    author_email='acba@cin.ufpe.br',
+    author_email='augustocbenvenuto@gmail.com',
     url='https://github.com/acba/elm',
     packages=find_packages(exclude=['contrib', 'docs', 'tests*']),
     package_dir={'elm':  'elm'},
     include_package_data=True,
     install_requires=requirements,
-    dependency_links=['https://github.com/claesenm/optunity/archive/master.zip#egg=optunity-1.0.2'],
     license="BSD",
     zip_safe=False,
     keywords='elm, machine learning, artificial intelligence, ai, regression, \
