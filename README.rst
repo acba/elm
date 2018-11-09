@@ -27,4 +27,4 @@ Features
 
 
 .. image:: https://img.shields.io/badge/Donate-PayPal-green.svg
-    :target: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=QKX5XYS8EYJLA
+    :target: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=QKX5XYS8EYJLA&currency_code=BRL&source=url
