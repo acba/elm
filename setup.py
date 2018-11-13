@@ -47,9 +47,9 @@ with open('HISTORY.rst') as history_file:
     history = history_file.read().replace('.. :changelog:', '')
 
 requirements = [
-    "numpy==1.13.1",
-    "deap>=1.0.2",
-    "optunity>=1.1.1"
+    "numpy==1.15.4",
+    "deap==1.2.2",
+    "optunity==1.1.1"
 ]
 
 setup(

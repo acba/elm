@@ -57,9 +57,11 @@ docs:
 	$(MAKE) -C docs html
 	open docs/_build/html/index.html
 
-release: clean
-	python setup.py sdist upload
-	python setup.py bdist_wheel upload
+release-test:
+	twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+
+release:
+	twine upload dist/*
 
 dist: clean
 	python setup.py sdist

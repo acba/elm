@@ -1,5 +1,5 @@
-numpy==1.13.1
-deap==1.0.2
+numpy==1.15.4
+deap==1.2.2
 optunity==1.1.1
-sphinx_rtd_theme==0.1.6
-sphinxcontrib-napoleon==0.2.9
+sphinx_rtd_theme==0.4.2
+sphinxcontrib-napoleon==0.7
