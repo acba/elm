@@ -32,4 +32,5 @@ To use Python Extreme Learning Machine (ELM) in a project::
     tr_result = elmk.train(tr_set)
     te_result = elmk.test(te_set)
 
-    print(te_result.get_accuracy)
+    print(te_result.get_accuracy())
+    #get_accuracy() is a function for getting accuracy
